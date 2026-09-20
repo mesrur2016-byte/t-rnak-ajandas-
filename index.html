@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tırnak Ajandası</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ajanda">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FBF6F7">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FBF6F7; --surface:#FFFFFF; --ink:#2B1520; --muted:#7D6470; --line:#EBDDE2;
+  --accent:#9B2D5E; --accent-ink:#FFFFFF; --soft:#F5E4EA; --lunch:#F1ECE4; --lunch-line:#D8CBBB;
+  --closed:#EFE9EB; --danger:#B3261E; --now:#E0533D;
+  --s1:#9B2D5E; --s2:#D9577A; --s3:#2F7F7A; --s4:#C98A2B; --s5:#5B5BB5; --s6:#6F8F3A; --s7:#A0522D;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1A1016; --surface:#25171F; --ink:#F6E9EE; --muted:#B99CA9; --line:#3A2630;
+    --accent:#E0739F; --accent-ink:#1A1016; --soft:#3A2230; --lunch:#2C2520; --lunch-line:#57493D;
+    --closed:#22181D; --danger:#FF8A80; --now:#FF7A5C;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1A1016; --surface:#25171F; --ink:#F6E9EE; --muted:#B99CA9; --line:#3A2630;
+  --accent:#E0739F; --accent-ink:#1A1016; --soft:#3A2230; --lunch:#2C2520; --lunch-line:#57493D;
+  --closed:#22181D; --danger:#FF8A80; --now:#FF7A5C;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font-family:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px 120px}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding:14px 0 8px}
+.titlerow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+h1{font-family:"Bricolage Grotesque","Figtree",system-ui,sans-serif;font-weight:700;font-size:26px;letter-spacing:-.01em;margin:0}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:12px;height:40px;min-width:40px;padding:0 12px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:600;font-size:14px}
+.monthrow{display:flex;align-items:center;justify-content:space-between;margin:10px 0 8px}
+.monthrow .m{font-weight:600;color:var(--muted);text-transform:capitalize}
+.navs{display:flex;gap:6px}
+
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:6px 0 7px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0}
+.day .dn{font-size:12px;color:var(--muted);font-weight:500}
+.day .dd{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:20px;font-weight:700;line-height:1.1}
+.day .dots{height:6px;display:flex;gap:2px}
+.day .dots i{width:5px;height:5px;border-radius:50%;background:var(--accent);display:block}
+.day.today .dd{color:var(--accent)}
+.day.sel{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.day.sel .dn,.day.sel .dd{color:var(--accent-ink)}
+.day.sel .dots i{background:var(--accent-ink)}
+.day.off{background:var(--closed);color:var(--muted)}
+.day.off.sel{background:var(--muted);border-color:var(--muted);color:var(--bg)}
+
+.summary{display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 10px;gap:10px}
+.summary h2{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:20px;font-weight:700;margin:0;text-transform:capitalize}
+.summary span{color:var(--muted);font-size:14px;white-space:nowrap}
+
+.timeline{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.hour{position:absolute;left:0;right:0;border-top:1px solid var(--line)}
+.hour.half{border-top-style:dashed;opacity:.6}
+.hour b{position:absolute;left:10px;top:-1px;font-size:12px;font-weight:600;color:var(--muted);background:var(--surface);padding:0 4px;transform:translateY(-50%)}
+.hour:first-child b{transform:none;top:4px}
+.lunch{position:absolute;left:58px;right:8px;border-radius:10px;background:repeating-linear-gradient(135deg,var(--lunch) 0 8px,transparent 8px 14px);border:1px dashed var(--lunch-line);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--muted);pointer-events:none}
+.afterlast{position:absolute;left:58px;right:8px;border-top:2px dotted var(--muted);pointer-events:none}
+.afterlast em{position:absolute;right:0;top:-10px;font-style:normal;font-size:11px;background:var(--surface);color:var(--muted);padding:0 6px}
+.now{position:absolute;left:52px;right:0;height:2px;background:var(--now);pointer-events:none;z-index:4}
+.now::before{content:"";position:absolute;left:-5px;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--now)}
+.appt{position:absolute;left:58px;right:8px;border-radius:12px;padding:6px 10px;color:#fff;text-align:left;border:0;overflow:hidden;z-index:3;display:flex;flex-direction:column;justify-content:flex-start;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.appt .n{font-weight:700;font-size:15px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.appt .s{font-size:13px;opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.appt.short{flex-direction:row;align-items:center;gap:8px}
+.appt.short .s{flex:1}
+.appt.clash{outline:2px solid var(--danger);outline-offset:-2px}
+.closedbox{padding:48px 20px;text-align:center;color:var(--muted);background:var(--closed);border-radius:18px;border:1px solid var(--line)}
+.closedbox strong{display:block;font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:22px;color:var(--ink);margin-bottom:4px}
+
+.fab{position:fixed;right:18px;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:30;height:56px;padding:0 22px;border-radius:28px;border:0;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:16px;box-shadow:0 6px 18px rgba(155,45,94,.35);display:flex;align-items:center;gap:8px}
+.fab svg{width:20px;height:20px}
+
+.sheet-bg{position:fixed;inset:0;background:rgba(20,8,14,.45);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.sheet-bg.open{display:flex}
+.sheet{background:var(--surface);width:100%;max-width:560px;max-height:92%;overflow-y:auto;border-radius:22px 22px 0 0;padding:18px 18px calc(22px + env(safe-area-inset-bottom,0px));animation:up .22s ease-out}
+@media (min-width:640px){.sheet-bg{align-items:center}.sheet{border-radius:22px;max-height:88%}}
+@keyframes up{from{transform:translateY(24px);opacity:.4}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.sheet{animation:none}}
+.sheet h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:22px;margin:0 0 14px;display:flex;justify-content:space-between;align-items:center}
+.close{border:0;background:var(--soft);width:36px;height:36px;border-radius:50%;font-size:20px;line-height:1}
+label.f{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:14px 0 6px}
+input.t,select.t,textarea.t{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:11px 12px;font-size:16px}
+textarea.t{min-height:64px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:7px}
+.chip i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(66px,1fr));gap:6px}
+.slot{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:8px 0;font-size:14px;font-weight:600;text-align:center}
+.slot.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.slot:disabled{opacity:.35;text-decoration:line-through;cursor:not-allowed}
+.hint{font-size:13px;color:var(--muted);margin-top:6px}
+.warn{font-size:14px;color:var(--danger);font-weight:600;margin-top:10px;min-height:0}
+.actions{display:flex;gap:10px;margin-top:20px}
+.btn{flex:1;height:50px;border-radius:14px;border:0;font-weight:700;font-size:16px}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:var(--soft);color:var(--ink)}
+.btn.danger{background:transparent;border:1px solid var(--danger);color:var(--danger);flex:0 0 auto;padding:0 16px}
+.detail{display:grid;gap:10px;margin-bottom:6px}
+.detail div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.detail div span:first-child{color:var(--muted)}
+.detail div span:last-child{font-weight:600;text-align:right}
+.detail a{color:var(--accent)}
+.svc-row{display:grid;grid-template-columns:14px 1fr 92px 36px;gap:8px;align-items:center;margin-bottom:8px}
+.svc-row i{width:12px;height:12px;border-radius:50%}
+.svc-row input{padding:9px 10px}
+.svc-row button{border:0;background:var(--soft);border-radius:10px;height:38px}
+.addsvc{border:1px dashed var(--line);background:transparent;border-radius:12px;padding:10px;width:100%;font-weight:600;color:var(--muted)}
+.days-toggle{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.days-toggle button{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:8px 0;font-size:13px;font-weight:600}
+.days-toggle button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.toggle{display:flex;align-items:center;justify-content:space-between;margin-top:14px;font-weight:600}
+.toggle input{width:22px;height:22px;accent-color:var(--accent)}
+@media (max-width:420px){h1{font-size:21px}.titlerow .iconbtn{padding:0 9px;font-size:13px}}
+.sync.due{background:var(--soft);color:var(--ink);padding:12px;border-radius:14px;font-size:14px;font-weight:600}
+.sync.due button{margin-left:6px;border:0;background:var(--accent);color:var(--accent-ink);border-radius:10px;padding:6px 12px;font-weight:700}
+.sync{font-size:12px;color:var(--muted);text-align:center;margin-top:18px}
+.sugg{border:1px solid var(--line);border-radius:12px;margin-top:6px;overflow:hidden;background:var(--surface)}
+.sugg button{display:flex;justify-content:space-between;width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;padding:10px 12px;text-align:left}
+.sugg button:last-child{border-bottom:0}
+.sugg small{color:var(--muted)}
+.cust{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:14px;margin-bottom:8px;width:100%;background:var(--bg);text-align:left}
+.cust .nm{font-weight:700}
+.cust .sv{font-size:13px;color:var(--muted)}
+.hist{font-size:14px;border-top:1px solid var(--line);padding:8px 0;display:flex;justify-content:space-between;gap:10px}
+.hist span:first-child{color:var(--muted)}
+.backup{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.backup .btn{height:44px;font-size:14px}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:14px;z-index:60;display:none}
+.list{margin-top:18px}
+.list h4{font-size:14px;color:var(--muted);margin:0 0 8px;font-weight:600}
+.li{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);background:var(--surface);border-radius:14px;margin-bottom:8px;width:100%;text-align:left}
+.li .tm{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:700;font-size:17px;min-width:52px}
+.li .bar{width:4px;align-self:stretch;border-radius:4px}
+.li .nm{font-weight:600}
+.li .sv{font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="titlerow">
+      <h1>Tırnak Ajandası</h1>
+      <div class="navs">
+        <button class="iconbtn" id="todayBtn">Bugün</button>
+        <button class="iconbtn" id="custBtn">Müşteriler</button>
+        <button class="iconbtn" id="settingsBtn" aria-label="Ayarlar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="monthrow">
+      <span class="m" id="monthLabel"></span>
+      <div class="navs">
+        <button class="iconbtn" id="prevWeek" aria-label="Önceki hafta">‹</button>
+        <button class="iconbtn" id="nextWeek" aria-label="Sonraki hafta">›</button>
+      </div>
+    </div>
+    <div class="days" id="days"></div>
+  </header>
+
+  <div class="summary"><h2 id="dayTitle"></h2><span id="dayCount"></span></div>
+  <div id="board"></div>
+  <div class="list" id="list"></div>
+  <div class="sync" id="sync"></div>
+</div>
+
+<button class="fab" id="fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Randevu ekle</button>
+
+<div class="sheet-bg" id="formBg"><div class="sheet" role="dialog" aria-modal="true">
+  <h3><span id="formTitle">Yeni randevu</span><button class="close" data-close="formBg" aria-label="Kapat">×</button></h3>
+  <label class="f" for="fName">Müşteri adı</label>
+  <input class="t" id="fName" autocomplete="off" placeholder="Ad soyad yaz, kayıtlı müşteri çıkar">
+  <div class="sugg" id="fSugg" hidden></div>
+  <label class="f" for="fPhone">Telefon</label>
+  <input class="t" id="fPhone" inputmode="tel" autocomplete="off" placeholder="05xx xxx xx xx">
+  <label class="f">İşlem</label>
+  <div class="chips" id="fServices"></div>
+  <label class="f">İşlem süresi</label>
+  <div class="chips" id="fDur"></div>
+  <div class="row2">
+    <div><label class="f" for="fDate">Tarih</label><input class="t" type="date" id="fDate"></div>
+    <div><label class="f" for="fPrice">Ücret (₺)</label><input class="t" id="fPrice" inputmode="decimal" placeholder="İsteğe bağlı"></div>
+  </div>
+  <label class="f">Saat</label>
+  <div class="slots" id="fSlots"></div>
+  <div class="hint" id="slotHint"></div>
+  <label class="f" for="fNote">Not</label>
+  <textarea class="t" id="fNote" placeholder="Renk, model, kaçıncı dolgu…"></textarea>
+  <div class="warn" id="fWarn"></div>
+  <div class="actions">
+    <button class="btn danger" id="fDelete" hidden>Sil</button>
+    <button class="btn ghost" data-close="formBg">Vazgeç</button>
+    <button class="btn primary" id="fSave">Kaydet</button>
+  </div>
+</div></div>
+
+<div class="sheet-bg" id="detailBg"><div class="sheet" role="dialog" aria-modal="true">
+  <h3><span id="dTitle"></span><button class="close" data-close="detailBg" aria-label="Kapat">×</button></h3>
+  <div class="detail" id="dBody"></div>
+  <div class="actions">
+    <button class="btn danger" id="dDelete">Sil</button>
+    <button class="btn primary" id="dEdit">Düzenle</button>
+  </div>
+</div></div>
+
+<div class="sheet-bg" id="setBg"><div class="sheet" role="dialog" aria-modal="true">
+  <h3>Ayarlar<button class="close" data-close="setBg" aria-label="Kapat">×</button></h3>
+  <div class="row2">
+    <div><label class="f" for="sOpen">Açılış</label><input class="t" type="time" id="sOpen" step="900"></div>
+    <div><label class="f" for="sClose">Kapanış</label><input class="t" type="time" id="sClose" step="900"></div>
+  </div>
+  <label class="f" for="sLast">Son müşteri saati</label>
+  <input class="t" type="time" id="sLast" step="900">
+  <div class="toggle"><span>Öğle arası</span><input type="checkbox" id="sLunchOn"></div>
+  <div class="row2">
+    <div><label class="f" for="sLunchS">Başlangıç</label><input class="t" type="time" id="sLunchS" step="900"></div>
+    <div><label class="f" for="sLunchE">Bitiş</label><input class="t" type="time" id="sLunchE" step="900"></div>
+  </div>
+  <label class="f">Çalışılan günler</label>
+  <div class="days-toggle" id="sDays"></div>
+  <label class="f">İşlemler ve varsayılan süreleri (dk)</label>
+  <div id="sSvc"></div>
+  <button class="addsvc" id="sAddSvc">+ İşlem ekle</button>
+  <label class="f">Yedek</label>
+  <div class="backup">
+    <button class="btn ghost" type="button" id="bExport">Yedeği indir</button>
+    <button class="btn ghost" type="button" id="bImport">Yedekten yükle</button>
+  </div>
+  <input type="file" id="bFile" accept=".json,application/json" hidden>
+  <div class="hint">Kayıtlar bu telefonda saklanır. Yedeği iCloud Drive’a kaydet ya da kendine WhatsApp’tan gönder; telefon değişirse “Yedekten yükle” ile hepsi geri gelir.</div>
+  <div class="actions">
+    <button class="btn ghost" data-close="setBg">Vazgeç</button>
+    <button class="btn primary" id="sSave">Ayarları kaydet</button>
+  </div>
+</div></div>
+
+<div class="sheet-bg" id="custBg"><div class="sheet" role="dialog" aria-modal="true">
+  <h3>Müşteriler<button class="close" data-close="custBg" aria-label="Kapat">×</button></h3>
+  <input class="t" id="cSearch" placeholder="İsim ya da telefon ara" autocomplete="off">
+  <div class="hint" id="cCount"></div>
+  <div id="cList" style="margin-top:10px"></div>
+  <button class="addsvc" id="cAdd">+ Yeni müşteri</button>
+</div></div>
+
+<div class="sheet-bg" id="cdBg"><div class="sheet" role="dialog" aria-modal="true">
+  <h3><span id="cdTitle">Müşteri</span><button class="close" data-close="cdBg" aria-label="Kapat">×</button></h3>
+  <label class="f" for="cdName">Ad soyad</label><input class="t" id="cdName" autocomplete="off">
+  <label class="f" for="cdPhone">Telefon</label><input class="t" id="cdPhone" inputmode="tel" autocomplete="off">
+  <label class="f" for="cdNote">Müşteri notu</label><textarea class="t" id="cdNote" placeholder="Sevdiği renk, tırnak şekli, hassasiyet…"></textarea>
+  <label class="f" id="cdHistL">Geçmiş randevular</label>
+  <div id="cdHist"></div>
+  <div class="actions">
+    <button class="btn danger" id="cdDelete">Sil</button>
+    <button class="btn ghost" id="cdBook">Randevu ver</button>
+    <button class="btn primary" id="cdSave">Kaydet</button>
+  </div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const PX = 1.6; // piksel / dakika
+  const COLORS = ['var(--s1)','var(--s2)','var(--s3)','var(--s4)','var(--s5)','var(--s6)','var(--s7)'];
+  const DAYNAMES = ['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
+  const DURS = [15,30,45,60,75,90,120,150,180];
+  const DEFAULT_SETTINGS = {
+    open:'09:00', close:'19:00', last:'18:00',
+    lunchOn:true, lunchStart:'13:00', lunchEnd:'14:00',
+    workDays:[1,2,3,4,5,6],
+    services:[
+      {name:'Protez tırnak', dur:120},
+      {name:'Protez dolgu', dur:90},
+      {name:'Kalıcı oje', dur:60},
+      {name:'Protez çıkarma', dur:30},
+      {name:'Manikür', dur:45},
+      {name:'Nail art', dur:30}
+    ]
+  };
+
+  let settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+  let appts = {}; // id -> appt
+  let customers = {}; // id -> {id,name,phone,note}
+  let selDate = new Date(); selDate.setHours(0,0,0,0);
+  let weekStart = mondayOf(selDate);
+  let editing = null; // form state
+  let viewing = null;
+
+  // ---------- helpers ----------
+  const $ = id => document.getElementById(id);
+  function pad(n){return String(n).padStart(2,'0')}
+  function key(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+  function fromKey(k){const [y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)}
+  function mondayOf(d){const x=new Date(d);const w=(x.getDay()+6)%7;x.setDate(x.getDate()-w);x.setHours(0,0,0,0);return x}
+  function toMin(t){if(!t)return 0;const [h,m]=t.split(':').map(Number);return h*60+m}
+  function toT(m){return pad(Math.floor(m/60))+':'+pad(m%60)}
+  function isWorkDay(d){return settings.workDays.includes(d.getDay())}
+  function svcColor(name){const i=settings.services.findIndex(s=>s.name===name);return COLORS[(i<0?6:i)%COLORS.length]}
+  function dayAppts(k){return Object.values(appts).filter(a=>a.date===k).sort((a,b)=>toMin(a.time)-toMin(b.time))}
+  function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  function toast(msg){const t=$('toast');t.textContent=msg;t.style.display='block';clearTimeout(toast._t);toast._t=setTimeout(()=>t.style.display='none',1800)}
+  function uid(){return 'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+
+  // ---------- storage (Claude db, yoksa tarayıcı) ----------
+  // Tüm veriler bu cihazda (tarayıcı hafızası) saklanır. İnternete ya da bir hesaba bağlı değildir.
+  const store = {
+    loadLocal(){
+      try{const s=localStorage.getItem('ta_settings');if(s)settings=Object.assign({},DEFAULT_SETTINGS,JSON.parse(s))}catch(e){}
+      try{const a=localStorage.getItem('ta_appts');if(a)appts=JSON.parse(a)||{}}catch(e){}
+      try{const c=localStorage.getItem('ta_customers');if(c)customers=JSON.parse(c)||{}}catch(e){}
+    },
+    saveLocal(){
+      try{localStorage.setItem('ta_settings',JSON.stringify(settings));localStorage.setItem('ta_appts',JSON.stringify(appts));localStorage.setItem('ta_customers',JSON.stringify(customers))}
+      catch(e){toast('Kayıt yapılamadı! Hemen Ayarlar > Yedeği indir')}
+    },
+    async saveAppt(a){appts[a.id]=a;this.saveLocal();render()},
+    async deleteAppt(id){delete appts[id];this.saveLocal();render()},
+    async saveSettings(){this.saveLocal();render()},
+    async saveCustomer(c){customers[c.id]=c;this.saveLocal()},
+    async deleteCustomer(id){delete customers[id];this.saveLocal()}
+  };
+
+  // ---------- müşteriler ----------
+  function norm(s){return (s||'').toLocaleLowerCase('tr-TR').replace(/\s+/g,' ').trim()}
+  function digits(s){return (s||'').replace(/\D/g,'').slice(-10)}
+  function findCustomer(name,phone){
+    const p=digits(phone), n=norm(name);
+    return Object.values(customers).find(c=>(p&&digits(c.phone)===p))||Object.values(customers).find(c=>norm(c.name)===n)||null;
+  }
+  async function upsertCustomerFromAppt(a){
+    let c=a.customerId&&customers[a.customerId]||findCustomer(a.name,a.phone);
+    if(c){
+      const upd=Object.assign({},c);
+      if(a.phone&&!c.phone) upd.phone=a.phone;
+      if(a.name&&norm(a.name)===norm(c.name)) upd.name=a.name;
+      if(JSON.stringify(upd)!==JSON.stringify(c)) await store.saveCustomer(upd);
+      return upd.id;
+    }
+    const n={id:'c'+uid().slice(1),name:a.name,phone:a.phone||'',note:''};
+    await store.saveCustomer(n); return n.id;
+  }
+  function customerAppts(c){
+    return Object.values(appts).filter(a=>a.customerId===c.id||(!a.customerId&&(norm(a.name)===norm(c.name)||(c.phone&&digits(a.phone)===digits(c.phone)))))
+      .sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+  }
+
+  // ---------- render ----------
+  function render(){renderDays();renderBoard()}
+
+  function renderDays(){
+    const box=$('days'); box.innerHTML='';
+    const todayK=key(new Date());
+    const mid=new Date(weekStart); mid.setDate(mid.getDate()+3);
+    $('monthLabel').textContent=mid.toLocaleDateString('tr-TR',{month:'long',year:'numeric'});
+    for(let i=0;i<7;i++){
+      const d=new Date(weekStart); d.setDate(d.getDate()+i);
+      const k=key(d); const n=dayAppts(k).length;
+      const b=document.createElement('button');
+      b.className='day'+(k===todayK?' today':'')+(k===key(selDate)?' sel':'')+(isWorkDay(d)?'':' off');
+      b.innerHTML='<span class="dn">'+DAYNAMES[d.getDay()]+'</span><span class="dd">'+d.getDate()+'</span><span class="dots">'+'<i></i>'.repeat(Math.min(n,4))+'</span>';
+      b.setAttribute('aria-label',d.toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'})+', '+n+' randevu');
+      b.onclick=()=>{selDate=d;render()};
+      box.appendChild(b);
+    }
+  }
+
+  function renderBoard(){
+    const k=key(selDate); const list=dayAppts(k);
+    $('dayTitle').textContent=selDate.toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'});
+    const busy=list.reduce((s,a)=>s+Number(a.dur||0),0);
+    $('dayCount').textContent=list.length?list.length+' randevu, '+(busy>=60?Math.floor(busy/60)+' sa ':'')+(busy%60?busy%60+' dk':''):'';
+    const board=$('board'); board.innerHTML='';
+    const lbox=$('list'); lbox.innerHTML='';
+
+    if(!isWorkDay(selDate)){
+      board.innerHTML='<div class="closedbox"><strong>Kapalı gün</strong>Bugün randevu alınmıyor. İstersen yine de “Randevu ekle” ile özel randevu girebilirsin.</div>';
+      if(list.length) renderList(list,lbox);
+      return;
+    }
+    let start=toMin(settings.open), end=toMin(settings.close);
+    list.forEach(a=>{start=Math.min(start,toMin(a.time));end=Math.max(end,toMin(a.time)+Number(a.dur))});
+    start=Math.floor(start/60)*60; end=Math.ceil(end/60)*60;
+    const tl=document.createElement('div'); tl.className='timeline';
+    tl.style.height=((end-start)*PX+8)+'px';
+    for(let m=start;m<=end;m+=30){
+      const h=document.createElement('div'); h.className='hour'+(m%60?' half':'');
+      h.style.top=((m-start)*PX)+'px';
+      if(!(m%60)) h.innerHTML='<b>'+toT(m)+'</b>';
+      tl.appendChild(h);
+    }
+    if(settings.lunchOn){
+      const ls=toMin(settings.lunchStart), le=toMin(settings.lunchEnd);
+      if(le>ls){const l=document.createElement('div');l.className='lunch';l.style.top=((ls-start)*PX+2)+'px';l.style.height=((le-ls)*PX-4)+'px';l.textContent='Öğle arası  '+settings.lunchStart+'–'+settings.lunchEnd;tl.appendChild(l)}
+    }
+    const lastM=toMin(settings.last);
+    if(lastM>start&&lastM<end){const al=document.createElement('div');al.className='afterlast';al.style.top=((lastM-start)*PX)+'px';al.innerHTML='<em>son müşteri '+settings.last+'</em>';tl.appendChild(al)}
+    // şimdi çizgisi
+    const now=new Date();
+    if(key(now)===k){const nm=now.getHours()*60+now.getMinutes();if(nm>=start&&nm<=end){const n=document.createElement('div');n.className='now';n.style.top=((nm-start)*PX)+'px';tl.appendChild(n)}}
+    // boş yere dokununca o saatte randevu aç
+    tl.addEventListener('click',e=>{
+      if(e.target!==tl&&!e.target.classList.contains('hour'))return;
+      const r=tl.getBoundingClientRect(); const m=start+Math.floor((e.clientY-r.top)/PX/15)*15;
+      openForm(null,toT(Math.max(start,m)));
+    });
+    list.forEach(a=>{
+      const s=toMin(a.time), d=Number(a.dur);
+      const b=document.createElement('button');
+      const h=d*PX-3;
+      b.className='appt'+(h<46?' short':'')+(clashes(a).length?' clash':'');
+      b.style.top=((s-start)*PX+1.5)+'px'; b.style.height=h+'px'; b.style.background=svcColor(a.service);
+      b.innerHTML='<span class="n">'+esc(a.name)+'</span><span class="s">'+esc(a.time)+'–'+toT(s+d)+'  '+esc(a.service)+'</span>';
+      b.onclick=ev=>{ev.stopPropagation();openDetail(a.id)};
+      tl.appendChild(b);
+    });
+    board.appendChild(tl);
+    if(list.length) renderList(list,lbox);
+  }
+
+  function renderList(list,box){
+    box.innerHTML='<h4>Günün listesi</h4>';
+    list.forEach(a=>{
+      const b=document.createElement('button'); b.className='li';
+      b.innerHTML='<span class="bar" style="background:'+svcColor(a.service)+'"></span><span class="tm">'+esc(a.time)+'</span><span><div class="nm">'+esc(a.name)+'</div><div class="sv">'+esc(a.service)+', '+a.dur+' dk'+(a.phone?'  ·  '+esc(a.phone):'')+'</div></span>';
+      b.onclick=()=>openDetail(a.id);
+      box.appendChild(b);
+    });
+  }
+
+  function clashes(a,exclude){
+    const s=toMin(a.time), e=s+Number(a.dur);
+    return dayAppts(a.date).filter(o=>o.id!==a.id&&o.id!==exclude&&toMin(o.time)<e&&toMin(o.time)+Number(o.dur)>s);
+  }
+
+  // ---------- form ----------
+  function openForm(id,presetTime){
+    const a=id?appts[id]:null;
+    const first=settings.services[0]||{name:'İşlem',dur:60};
+    editing={
+      id:a?a.id:null,
+      name:a?a.name:'', phone:a?a.phone:'', service:a?a.service:first.name,
+      dur:a?Number(a.dur):first.dur, date:a?a.date:key(selDate),
+      time:a?a.time:(presetTime||null), note:a?a.note:'', price:a?a.price:''
+    };
+    $('formTitle').textContent=a?'Randevuyu düzenle':'Yeni randevu';
+    $('fName').value=editing.name; $('fPhone').value=editing.phone||''; $('fNote').value=editing.note||'';
+    $('fDate').value=editing.date; $('fPrice').value=editing.price||'';
+    editing.customerId=a?a.customerId:null;
+    $('fDelete').hidden=!a; $('fSugg').hidden=true;
+    renderFormBits();
+    open('formBg'); if(!a) setTimeout(()=>$('fName').focus(),50);
+  }
+
+  function renderFormBits(){
+    const sb=$('fServices'); sb.innerHTML='';
+    const names=settings.services.map(s=>s.name);
+    if(editing.service&&!names.includes(editing.service)) names.push(editing.service);
+    names.forEach(n=>{
+      const c=document.createElement('button'); c.type='button';
+      c.className='chip'+(editing.service===n?' on':'');
+      c.innerHTML='<i style="background:'+svcColor(n)+'"></i>'+esc(n);
+      c.onclick=()=>{editing.service=n;const s=settings.services.find(x=>x.name===n);if(s)editing.dur=s.dur;renderFormBits()};
+      sb.appendChild(c);
+    });
+    const db=$('fDur'); db.innerHTML='';
+    const durs=DURS.includes(editing.dur)?DURS:[...DURS,editing.dur].sort((a,b)=>a-b);
+    durs.forEach(d=>{
+      const c=document.createElement('button'); c.type='button';
+      c.className='chip'+(editing.dur===d?' on':'');
+      c.textContent=d>=60?(Math.floor(d/60)+' sa'+(d%60?' '+d%60+' dk':'')):d+' dk';
+      c.onclick=()=>{editing.dur=d;renderFormBits()};
+      db.appendChild(c);
+    });
+    renderSlots();
+  }
+
+  function renderSlots(){
+    const box=$('fSlots'); box.innerHTML='';
+    const date=fromKey(editing.date);
+    const open_=toMin(settings.open), last=toMin(settings.last);
+    const ls=toMin(settings.lunchStart), le=toMin(settings.lunchEnd);
+    let free=0;
+    for(let m=open_;m<=last;m+=15){
+      const t=toT(m); const e=m+editing.dur;
+      const inLunch=settings.lunchOn&&m<le&&e>ls;
+      const busy=clashes({id:editing.id,date:editing.date,time:t,dur:editing.dur}).length>0;
+      const b=document.createElement('button'); b.type='button';
+      b.className='slot'+(editing.time===t?' on':''); b.textContent=t;
+      b.disabled=(inLunch||busy)&&editing.time!==t;
+      if(!b.disabled)free++;
+      b.onclick=()=>{editing.time=t;renderSlots()};
+      box.appendChild(b);
+    }
+    let hint='Üstü çizili saatler dolu ya da öğle arasına denk geliyor.';
+    if(!isWorkDay(date)) hint='Bu gün normalde kapalı; yine de randevu girebilirsin.';
+    else if(!free) hint='Bu süreye uygun boş saat kalmadı. Süreyi kısalt ya da başka gün seç.';
+    $('slotHint').textContent=hint;
+    // uyarı
+    let w='';
+    if(editing.time){
+      const s=toMin(editing.time), e=s+editing.dur;
+      if(e>toMin(settings.close)) w='Bu işlem kapanıştan sonra bitiyor ('+toT(e)+').';
+      else if(settings.lunchOn&&s<le&&e>ls) w='Bu saat öğle arasına taşıyor.';
+      const c=clashes({id:editing.id,date:editing.date,time:editing.time,dur:editing.dur});
+      if(c.length) w='Çakışıyor: '+c.map(x=>x.name+' '+x.time).join(', ');
+    }
+    $('fWarn').textContent=w;
+  }
+
+  $('fName').oninput=()=>{
+    editing.customerId=null;
+    const q=norm($('fName').value); const box=$('fSugg');
+    if(q.length<2){box.hidden=true;return}
+    const hits=Object.values(customers).filter(c=>norm(c.name).includes(q)||(digits(c.phone)&&digits(c.phone).includes(q.replace(/\D/g,'')||'x'))).slice(0,5);
+    if(!hits.length){box.hidden=true;return}
+    box.innerHTML=''; box.hidden=false;
+    hits.forEach(c=>{
+      const b=document.createElement('button'); b.type='button';
+      b.innerHTML='<span>'+esc(c.name)+'</span><small>'+esc(c.phone||'')+'</small>';
+      b.onclick=()=>{$('fName').value=c.name;$('fPhone').value=c.phone||'';editing.customerId=c.id;box.hidden=true};
+      box.appendChild(b);
+    });
+  };
+  $('fDate').onchange=e=>{editing.date=e.target.value||key(selDate);editing.time=editing.time;renderSlots()};
+  $('fSave').onclick=async()=>{
+    editing.name=$('fName').value.trim(); editing.phone=$('fPhone').value.trim();
+    editing.note=$('fNote').value.trim(); editing.price=$('fPrice').value.trim();
+    if(!editing.name){$('fWarn').textContent='Müşteri adını yaz.';$('fName').focus();return}
+    if(!editing.time){$('fWarn').textContent='Bir saat seç.';return}
+    const a={id:editing.id||uid(),customerId:editing.customerId||null,name:editing.name,phone:editing.phone,service:editing.service,dur:editing.dur,date:editing.date,time:editing.time,note:editing.note,price:editing.price};
+    if(clashes(a).length&&!confirm('Bu saat başka randevuyla çakışıyor. Yine de kaydedilsin mi?'))return;
+    close('formBg');
+    a.customerId=await upsertCustomerFromAppt(a);
+    selDate=fromKey(a.date); weekStart=mondayOf(selDate);
+    await store.saveAppt(a); toast('Randevu kaydedildi');
+  };
+  $('fDelete').onclick=async()=>{
+    if(!editing.id||!confirm('Bu randevu silinsin mi?'))return;
+    close('formBg'); await store.deleteAppt(editing.id); toast('Randevu silindi');
+  };
+
+  // ---------- detay ----------
+  function openDetail(id){
+    const a=appts[id]; if(!a)return; viewing=id;
+    $('dTitle').textContent=a.name;
+    const e=toMin(a.time)+Number(a.dur);
+    const tel=a.phone?a.phone.replace(/[^\d+]/g,''):'';
+    const wa=tel?(tel.startsWith('+')?tel.slice(1):tel.startsWith('0')?'90'+tel.slice(1):tel):'';
+    const rows=[
+      ['Tarih',fromKey(a.date).toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'})],
+      ['Saat',a.time+'–'+toT(e)],
+      ['İşlem',a.service+', '+a.dur+' dk'],
+    ];
+    let html=rows.map(r=>'<div><span>'+r[0]+'</span><span>'+esc(r[1])+'</span></div>').join('');
+    if(a.phone) html+='<div><span>Telefon</span><span><a href="tel:'+esc(tel)+'">'+esc(a.phone)+'</a> · <a href="https://wa.me/'+esc(wa)+'" target="_blank" rel="noopener">WhatsApp</a></span></div>';
+    if(a.price) html+='<div><span>Ücret</span><span>'+esc(a.price)+' ₺</span></div>';
+    if(a.note) html+='<div><span>Not</span><span>'+esc(a.note)+'</span></div>';
+    $('dBody').innerHTML=html;
+    open('detailBg');
+  }
+  $('dEdit').onclick=()=>{close('detailBg');openForm(viewing)};
+  $('dDelete').onclick=async()=>{if(!confirm('Bu randevu silinsin mi?'))return;close('detailBg');await store.deleteAppt(viewing);toast('Randevu silindi')};
+
+  // ---------- ayarlar ----------
+  let draft=null;
+  function openSettings(){
+    draft=JSON.parse(JSON.stringify(settings));
+    $('sOpen').value=draft.open; $('sClose').value=draft.close; $('sLast').value=draft.last;
+    $('sLunchOn').checked=draft.lunchOn; $('sLunchS').value=draft.lunchStart; $('sLunchE').value=draft.lunchEnd;
+    renderSetBits(); open('setBg');
+  }
+  function renderSetBits(){
+    const dt=$('sDays'); dt.innerHTML='';
+    [1,2,3,4,5,6,0].forEach(i=>{
+      const b=document.createElement('button'); b.type='button';
+      b.className=draft.workDays.includes(i)?'on':''; b.textContent=DAYNAMES[i];
+      b.onclick=()=>{draft.workDays=draft.workDays.includes(i)?draft.workDays.filter(x=>x!==i):[...draft.workDays,i];renderSetBits()};
+      dt.appendChild(b);
+    });
+    const sv=$('sSvc'); sv.innerHTML='';
+    draft.services.forEach((s,i)=>{
+      const r=document.createElement('div'); r.className='svc-row';
+      r.innerHTML='<i style="background:'+COLORS[i%COLORS.length]+'"></i><input class="t" value="'+esc(s.name)+'" aria-label="İşlem adı"><input class="t" type="number" min="5" step="5" value="'+s.dur+'" aria-label="Süre dakika"><button type="button" aria-label="Sil">×</button>';
+      const [n,d]=r.querySelectorAll('input');
+      n.oninput=()=>{s.name=n.value}; d.oninput=()=>{s.dur=Math.max(5,parseInt(d.value)||0)};
+      r.querySelector('button').onclick=()=>{draft.services.splice(i,1);renderSetBits()};
+      sv.appendChild(r);
+    });
+  }
+  $('sAddSvc').onclick=()=>{draft.services.push({name:'',dur:60});renderSetBits();const ins=$('sSvc').querySelectorAll('.svc-row input:first-of-type');ins[ins.length-1]&&ins[ins.length-1].focus()};
+  $('sSave').onclick=async()=>{
+    draft.open=$('sOpen').value||'09:00'; draft.close=$('sClose').value||'19:00'; draft.last=$('sLast').value||draft.close;
+    draft.lunchOn=$('sLunchOn').checked; draft.lunchStart=$('sLunchS').value||'13:00'; draft.lunchEnd=$('sLunchE').value||'14:00';
+    draft.services=draft.services.filter(s=>s.name.trim()).map(s=>({name:s.name.trim(),dur:s.dur||60}));
+    if(toMin(draft.lunchEnd)<=toMin(draft.lunchStart)&&draft.lunchOn){toast('Öğle arası bitişi başlangıçtan sonra olmalı');return}
+    if(toMin(draft.close)<=toMin(draft.open)){toast('Kapanış açılıştan sonra olmalı');return}
+    settings=draft; close('setBg'); await store.saveSettings(); toast('Ayarlar kaydedildi');
+  };
+
+  // ---------- müşteri defteri ----------
+  let curCust=null;
+  function renderCustList(){
+    const q=norm($('cSearch').value), qd=q.replace(/\D/g,'');
+    const all=Object.values(customers).sort((a,b)=>a.name.localeCompare(b.name,'tr'));
+    const list=all.filter(c=>!q||norm(c.name).includes(q)||(qd&&digits(c.phone).includes(qd)));
+    $('cCount').textContent=all.length?all.length+' kayıtlı müşteri':'Henüz müşteri yok. Randevu girdikçe müşteriler buraya otomatik eklenir.';
+    const box=$('cList'); box.innerHTML='';
+    list.forEach(c=>{
+      const h=customerAppts(c); const last=h[0];
+      const b=document.createElement('button'); b.className='cust';
+      b.innerHTML='<span><div class="nm">'+esc(c.name)+'</div><div class="sv">'+esc(c.phone||'Telefon yok')+'</div></span><span class="sv">'+h.length+' randevu'+(last?'<br>son: '+fromKey(last.date).toLocaleDateString('tr-TR',{day:'numeric',month:'short'}):'')+'</span>';
+      b.onclick=()=>openCust(c.id);
+      box.appendChild(b);
+    });
+  }
+  function openCust(id){
+    curCust=id?customers[id]:null;
+    $('cdTitle').textContent=curCust?curCust.name:'Yeni müşteri';
+    $('cdName').value=curCust?curCust.name:''; $('cdPhone').value=curCust?curCust.phone:''; $('cdNote').value=curCust?curCust.note||'':'';
+    $('cdDelete').hidden=!curCust; $('cdBook').hidden=!curCust;
+    const h=curCust?customerAppts(curCust):[];
+    $('cdHistL').hidden=!h.length;
+    $('cdHist').innerHTML=h.map(a=>'<div class="hist"><span>'+fromKey(a.date).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'})+' '+esc(a.time)+'</span><span>'+esc(a.service)+(a.price?', '+esc(a.price)+' ₺':'')+'</span></div>').join('');
+    open('cdBg');
+  }
+  $('custBtn').onclick=()=>{$('cSearch').value='';renderCustList();open('custBg')};
+  $('cSearch').oninput=renderCustList;
+  $('cAdd').onclick=()=>openCust(null);
+  $('cdSave').onclick=async()=>{
+    const name=$('cdName').value.trim(); if(!name){toast('İsim yaz');return}
+    const c=Object.assign({},curCust||{id:'c'+uid().slice(1)},{name,phone:$('cdPhone').value.trim(),note:$('cdNote').value.trim()});
+    await store.saveCustomer(c); close('cdBg'); renderCustList(); toast('Müşteri kaydedildi');
+  };
+  $('cdDelete').onclick=async()=>{
+    if(!curCust||!confirm(curCust.name+' müşteri listesinden silinsin mi? Randevuları silinmez.'))return;
+    await store.deleteCustomer(curCust.id); close('cdBg'); renderCustList(); toast('Müşteri silindi');
+  };
+  $('cdBook').onclick=()=>{
+    const c=curCust; close('cdBg'); close('custBg'); openForm(null);
+    $('fName').value=c.name; $('fPhone').value=c.phone||''; editing.customerId=c.id;
+  };
+
+  // ---------- yedek ----------
+  $('bExport').onclick=async()=>{
+    const data=JSON.stringify({app:'tirnak-ajandasi',v:1,date:new Date().toISOString(),settings,customers,appts},null,1);
+    const name='tirnak-ajanda-yedek-'+key(new Date())+'.json';
+    const file=new File([data],name,{type:'application/json'});
+    try{
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:'Ajanda yedeği'});
+      }else{
+        const u=URL.createObjectURL(file);const l=document.createElement('a');l.href=u;l.download=name;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+      }
+      localStorage.setItem('ta_lastBackup',String(Date.now())); checkBackup(); toast('Yedek hazır');
+    }catch(e){ if(!(e&&e.name==='AbortError')) toast('Yedek alınamadı'); }
+  };
+  $('bImport').onclick=()=>$('bFile').click();
+  $('bFile').onchange=async e=>{
+    const f=e.target.files[0]; e.target.value=''; if(!f)return;
+    try{
+      const d=JSON.parse(await f.text());
+      if(d.app!=='tirnak-ajandasi')throw 0;
+      const na=Object.values(d.appts||{}).filter(a=>!appts[a.id]);
+      const nc=Object.values(d.customers||{}).filter(c=>!customers[c.id]);
+      if(!confirm(na.length+' randevu ve '+nc.length+' müşteri eklenecek. Mevcut kayıtlar silinmez. Devam?'))return;
+      for(const c of nc) await store.saveCustomer(c);
+      for(const a of na) await store.saveAppt(a);
+      close('setBg'); toast('Yedek yüklendi');
+    }catch(err){toast('Bu dosya ajanda yedeği değil')}
+  };
+
+  function checkBackup(){
+    const last=Number(localStorage.getItem('ta_lastBackup')||0);
+    const n=Object.keys(appts).length;
+    const days=last?Math.floor((Date.now()-last)/864e5):null;
+    const el=$('sync');
+    if(!n){el.textContent='Kayıtlar bu telefonda saklanır.';el.className='sync';return}
+    if(days===null||days>=14){
+      el.innerHTML=(days===null?'Henüz hiç yedek almadın.':days+' gündür yedek almadın.')+' <button id="quickBackup">Şimdi yedekle</button>';
+      el.className='sync due'; $('quickBackup').onclick=()=>$('bExport').click();
+    }else{el.textContent='Son yedek '+(days?days+' gün önce':'bugün')+' alındı.';el.className='sync'}
+  }
+
+  // ---------- genel ----------
+  function open(id){$(id).classList.add('open')}
+  function close(id){$(id).classList.remove('open')}
+  document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>close(b.dataset.close));
+  document.querySelectorAll('.sheet-bg').forEach(bg=>bg.addEventListener('click',e=>{if(e.target===bg)close(bg.id)}));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.sheet-bg.open').forEach(b=>close(b.id))});
+  $('fab').onclick=()=>openForm(null);
+  $('settingsBtn').onclick=openSettings;
+  $('todayBtn').onclick=()=>{selDate=new Date();selDate.setHours(0,0,0,0);weekStart=mondayOf(selDate);render()};
+  $('prevWeek').onclick=()=>{weekStart.setDate(weekStart.getDate()-7);selDate=new Date(weekStart);render()};
+  $('nextWeek').onclick=()=>{weekStart.setDate(weekStart.getDate()+7);selDate=new Date(weekStart);render()};
+  setInterval(renderBoard,60000);
+
+  store.loadLocal();
+  if(!isWorkDay(selDate)&&selDate.getDay()===0){ /* pazar ise pazartesiye geç */ selDate.setDate(selDate.getDate()+1); weekStart=mondayOf(selDate); }
+  render();
+  try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+  if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
+  // eski randevulardan müşteri defterini doldur
+  (async()=>{for(const a of Object.values(appts)){ if(!a.customerId||!customers[a.customerId]){ const id=await upsertCustomerFromAppt(a); if(a.customerId!==id) await store.saveAppt(Object.assign({},a,{customerId:id})); } }})();
+  checkBackup();
+})();
+</script>
+</body>
+</html>
