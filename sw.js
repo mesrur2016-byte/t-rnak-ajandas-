@@ -1,6 +1,6 @@
 // Uygulamayı telefona kaydeder; internet olmasa da açılır.
 // v2: sayfa açılırken önce internete bakar, böylece güncellemeler hemen gelir.
-const CACHE='ajanda-v4';
+const CACHE='ajanda-v5';
 const FILES=['./','./index.html','./icon.png','./manifest.json'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil((async()=>{
