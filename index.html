@@ -278,6 +278,7 @@ textarea.t{min-height:64px;resize:vertical}
   </div>
   <input type="file" id="bFile" accept=".json,application/json" hidden>
   <div class="hint">Kayıtlar bu telefonda saklanır. Yedeği iCloud Drive’a kaydet ya da kendine WhatsApp’tan gönder; telefon değişirse “Yedekten yükle” ile hepsi geri gelir.</div>
+  <div class="hint" style="text-align:center;margin-top:12px">Sürüm 2 · ciro ve net kâr</div>
   <div class="actions">
     <button class="btn ghost" data-close="setBg">Vazgeç</button>
     <button class="btn primary" id="sSave">Ayarları kaydet</button>
@@ -831,7 +832,15 @@ textarea.t{min-height:64px;resize:vertical}
   if(!isWorkDay(selDate)&&selDate.getDay()===0){ /* pazar ise pazartesiye geç */ selDate.setDate(selDate.getDate()+1); weekStart=mondayOf(selDate); }
   render();
   try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
-  if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
+  if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+    const hadCtrl=!!navigator.serviceWorker.controller; let reloaded=false;
+    // yeni sürüm yüklenince uygulamayı bir kez tazele
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!hadCtrl||reloaded)return;reloaded=true;location.reload()});
+    navigator.serviceWorker.register('sw.js').then(reg=>{
+      reg.update();
+      document.addEventListener('visibilitychange',()=>{if(!document.hidden)reg.update()});
+    }).catch(()=>{});
+  }
   // eski randevulardan müşteri defterini doldur
   (async()=>{for(const a of Object.values(appts)){ if(!a.customerId||!customers[a.customerId]){ const id=await upsertCustomerFromAppt(a); if(a.customerId!==id) await store.saveAppt(Object.assign({},a,{customerId:id})); } }})();
   checkBackup();
