@@ -21,6 +21,7 @@
   --accent:#9B2D5E; --accent-ink:#FFFFFF; --soft:#F5E4EA; --lunch:#F1ECE4; --lunch-line:#D8CBBB;
   --closed:#EFE9EB; --danger:#B3261E; --now:#E0533D;
   --s1:#9B2D5E; --s2:#D9577A; --s3:#2F7F7A; --s4:#C98A2B; --s5:#5B5BB5; --s6:#6F8F3A; --s7:#A0522D;
+  --s8:#3A6EA5; --s9:#7A4FA3; --s10:#546E7A;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
@@ -278,7 +279,7 @@ textarea.t{min-height:64px;resize:vertical}
   </div>
   <input type="file" id="bFile" accept=".json,application/json" hidden>
   <div class="hint">Kayıtlar bu telefonda saklanır. Yedeği iCloud Drive’a kaydet ya da kendine WhatsApp’tan gönder; telefon değişirse “Yedekten yükle” ile hepsi geri gelir.</div>
-  <div class="hint" style="text-align:center;margin-top:12px">Sürüm 2 · ciro ve net kâr</div>
+  <div class="hint" style="text-align:center;margin-top:12px">Sürüm 3 · pedikür ve ayak işlemleri</div>
   <div class="actions">
     <button class="btn ghost" data-close="setBg">Vazgeç</button>
     <button class="btn primary" id="sSave">Ayarları kaydet</button>
@@ -324,7 +325,7 @@ textarea.t{min-height:64px;resize:vertical}
 <script>
 (function(){
   const PX = 1.6; // piksel / dakika
-  const COLORS = ['var(--s1)','var(--s2)','var(--s3)','var(--s4)','var(--s5)','var(--s6)','var(--s7)'];
+  const COLORS = ['var(--s1)','var(--s2)','var(--s3)','var(--s4)','var(--s5)','var(--s6)','var(--s7)','var(--s8)','var(--s9)','var(--s10)'];
   const DAYNAMES = ['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
   const DURS = [15,30,45,60,75,90,120,150,180];
   const DEFAULT_SETTINGS = {
@@ -337,9 +338,19 @@ textarea.t{min-height:64px;resize:vertical}
       {name:'Kalıcı oje', dur:60},
       {name:'Protez çıkarma', dur:30},
       {name:'Manikür', dur:45},
-      {name:'Nail art', dur:30}
+      {name:'Nail art', dur:30},
+      {name:'Pedikür', dur:60},
+      {name:'Ayak kalıcı oje', dur:60},
+      {name:'Ayak kalıcı oje + Pedikür', dur:90}
     ]
   };
+  // kayıtlı ayarları olanlara bir kereliğine eklenecek işlemler
+  const ADD_SERVICES = [
+    {name:'Pedikür', dur:60},
+    {name:'Ayak kalıcı oje', dur:60},
+    {name:'Ayak kalıcı oje + Pedikür', dur:90}
+  ];
+  const ADD_SERVICES_FLAG = 'ta_svc_ayak';
 
   let settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
   let appts = {}; // id -> appt
@@ -392,6 +403,19 @@ textarea.t{min-height:64px;resize:vertical}
     async saveCustomer(c){customers[c.id]=c;this.saveLocal()},
     async deleteCustomer(id){delete customers[id];this.saveLocal()}
   };
+
+  // kayıtlı ayarlarda olmayan yeni işlemleri bir kez ekler; kullanıcı sonradan
+  // silerse geri gelmesin diye tek seferlik işaret bırakır
+  function addNewServices(){
+    try{ if(localStorage.getItem(ADD_SERVICES_FLAG)==='1') return false }catch(e){}
+    if(!Array.isArray(settings.services)) settings.services=JSON.parse(JSON.stringify(DEFAULT_SETTINGS.services));
+    let changed=false;
+    ADD_SERVICES.forEach(n=>{
+      if(!settings.services.some(s=>norm(s.name)===norm(n.name))){ settings.services.push({name:n.name,dur:n.dur}); changed=true }
+    });
+    try{ localStorage.setItem(ADD_SERVICES_FLAG,'1') }catch(e){}
+    return changed;
+  }
 
   // ---------- müşteriler ----------
   function norm(s){return (s||'').toLocaleLowerCase('tr-TR').replace(/\s+/g,' ').trim()}
@@ -829,6 +853,7 @@ textarea.t{min-height:64px;resize:vertical}
   setInterval(renderBoard,60000);
 
   store.loadLocal();
+  if(addNewServices()) store.saveLocal();
   if(!isWorkDay(selDate)&&selDate.getDay()===0){ /* pazar ise pazartesiye geç */ selDate.setDate(selDate.getDate()+1); weekStart=mondayOf(selDate); }
   render();
   try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
