@@ -183,6 +183,12 @@ textarea.t{min-height:64px;resize:vertical}
 .adamonth{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:var(--muted);padding:8px 0 0}
 .adamonth b{color:var(--ink)}
 .adanote{font-size:12px;color:var(--muted);margin-top:10px}
+
+.wbk{margin-top:14px}
+.wbkbtn{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:16px;padding:13px 14px;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:700;font-size:15px}
+.wbkbtn svg{width:17px;height:17px;flex:0 0 auto}
+.wbkbtn small{display:block;font-weight:500;font-size:12px;color:var(--muted);margin-top:2px}
+.wbkbtn:disabled{opacity:.5}
 </style>
 </head>
 <body>
@@ -212,6 +218,7 @@ textarea.t{min-height:64px;resize:vertical}
   <div id="board"></div>
   <div class="list" id="list"></div>
   <div class="ada" id="ada"></div>
+  <div class="wbk" id="wbk"></div>
   <div class="sync" id="sync"></div>
 </div>
 
@@ -279,7 +286,7 @@ textarea.t{min-height:64px;resize:vertical}
   </div>
   <input type="file" id="bFile" accept=".json,application/json" hidden>
   <div class="hint">Kayıtlar bu telefonda saklanır. Yedeği iCloud Drive’a kaydet ya da kendine WhatsApp’tan gönder; telefon değişirse “Yedekten yükle” ile hepsi geri gelir.</div>
-  <div class="hint" style="text-align:center;margin-top:12px">Sürüm 3 · pedikür ve ayak işlemleri</div>
+  <div class="hint" style="text-align:center;margin-top:12px">Sürüm 4 · haftalık yedek</div>
   <div class="actions">
     <button class="btn ghost" data-close="setBg">Vazgeç</button>
     <button class="btn primary" id="sSave">Ayarları kaydet</button>
@@ -442,7 +449,7 @@ textarea.t{min-height:64px;resize:vertical}
   }
 
   // ---------- render ----------
-  function render(){renderDays();renderBoard();renderAda()}
+  function render(){renderDays();renderBoard();renderAda();renderWeekBackup()}
 
   function renderDays(){
     const box=$('days'); box.innerHTML='';
@@ -799,9 +806,8 @@ textarea.t{min-height:64px;resize:vertical}
   };
 
   // ---------- yedek ----------
-  $('bExport').onclick=async()=>{
-    const data=JSON.stringify({app:'tirnak-ajandasi',v:1,date:new Date().toISOString(),settings,customers,appts},null,1);
-    const name='tirnak-ajanda-yedek-'+key(new Date())+'.json';
+  async function sendBackup(payload,name,isFull){
+    const data=JSON.stringify(payload,null,1);
     const file=new File([data],name,{type:'application/json'});
     try{
       if(navigator.canShare&&navigator.canShare({files:[file]})){
@@ -809,9 +815,47 @@ textarea.t{min-height:64px;resize:vertical}
       }else{
         const u=URL.createObjectURL(file);const l=document.createElement('a');l.href=u;l.download=name;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
       }
-      localStorage.setItem('ta_lastBackup',String(Date.now())); checkBackup(); toast('Yedek hazır');
+      if(isFull){try{localStorage.setItem('ta_lastBackup',String(Date.now()))}catch(e){}checkBackup()}
+      toast('Yedek hazır');
     }catch(e){ if(!(e&&e.name==='AbortError')) toast('Yedek alınamadı'); }
-  };
+  }
+  $('bExport').onclick=()=>sendBackup(
+    {app:'tirnak-ajandasi',v:1,date:new Date().toISOString(),scope:'all',settings,customers,appts},
+    'tirnak-ajanda-yedek-'+key(new Date())+'.json', true);
+
+  // ---------- haftalık yedek ----------
+  function weekDays(){const out=[];for(let i=0;i<7;i++){const d=new Date(weekStart);d.setDate(d.getDate()+i);out.push(d)}return out}
+  function weekApptList(){
+    const ks=weekDays().map(key);
+    return Object.values(appts).filter(a=>ks.includes(a.date)).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  }
+  function weekLabel(){
+    const ds=weekDays(), s=ds[0], e=ds[6];
+    const f=(d,withMonth)=>d.getDate()+(withMonth?' '+d.toLocaleDateString('tr-TR',{month:'long'}):'');
+    return f(s,s.getMonth()!==e.getMonth())+'–'+f(e,true);
+  }
+  function renderWeekBackup(){
+    const box=$('wbk'); box.innerHTML='';
+    const list=weekApptList();
+    const b=document.createElement('button'); b.type='button'; b.className='wbkbtn'; b.id='wExport';
+    b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>'
+      +'<span>Bu haftanın yedeği<small>'+esc(weekLabel())+' · '+(list.length?list.length+' randevu':'randevu yok')+'</small></span>';
+    b.disabled=!list.length;
+    b.onclick=()=>{
+      const ks=weekDays().map(key);
+      const cs={};
+      list.forEach(a=>{
+        const c=(a.customerId&&customers[a.customerId])||findCustomer(a.name,a.phone);
+        if(c) cs[c.id]=c;
+      });
+      const wa={}; list.forEach(a=>{wa[a.id]=a});
+      sendBackup({app:'tirnak-ajandasi',v:1,date:new Date().toISOString(),scope:'week',
+        weekStart:ks[0],weekEnd:ks[6],settings,customers:cs,appts:wa},
+        'tirnak-ajanda-hafta-'+ks[0]+'.json', false);
+    };
+    box.appendChild(b);
+  }
+
   $('bImport').onclick=()=>$('bFile').click();
   $('bFile').onchange=async e=>{
     const f=e.target.files[0]; e.target.value=''; if(!f)return;
